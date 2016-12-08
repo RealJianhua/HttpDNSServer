@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"fmt"
-
-	"encoding/json"
 	"strings"
 
 	"../dns/edns"
