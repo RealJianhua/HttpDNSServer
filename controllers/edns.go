@@ -3,6 +3,8 @@ package controllers
 import (
 	"fmt"
 
+	"strings"
+
 	"../dns/edns"
 	"github.com/astaxie/beego"
 )
@@ -19,10 +21,16 @@ type EDNSController struct {
 //}
 
 func (this *EDNSController) Get() {
-	edns.Init()
 	clientIP := this.Ctx.Request.RemoteAddr
+	end := strings.Index(clientIP, ":")
+	if end < 0 {
+		end = len(clientIP)
+	}
+	clientIP = string(clientIP[0:end])
 	fmt.Println("clientip:", clientIP)
-	ednsModel := edns.Find(this.GetString("domain"), this.GetString("ip"))
+
+	edns.Init()
+	ednsModel := edns.Find(this.GetString("domain"), clientIP)
 	fmt.Println(ednsModel)
 	this.Data["json"] = &ednsModel
 	this.ServeJSON()

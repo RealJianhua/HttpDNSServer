@@ -3,8 +3,9 @@ package edns
 import (
 	"strings"
 
+	"fmt"
+
 	"github.com/miekg/dns"
-	//	"fmt"
 )
 
 func FindSoaNs(ednsModel *EDNSModel) {
@@ -15,6 +16,8 @@ func FindSoaNs(ednsModel *EDNSModel) {
 
 	// 从本机上级DNS服务器获取域名的NS
 	cname, soa, ns := findSoaNs(ednsModel.Domain)
+
+	fmt.Println("cname:", cname, ",soa:", soa, ",ns:", ns)
 
 	if strings.EqualFold(cname, "") == false {
 		cname = strings.TrimRight(cname, ",")
@@ -52,24 +55,26 @@ func findSoaNs(domain string) (string, string, string) {
 	in, _ := dns.Exchange(m1, (cf.Servers[0] + ":53"))
 	rrList := [...][]dns.RR{in.Answer, in.Ns, in.Extra}
 
+	fmt.Println("rrList: ", rrList)
+
 	for _, rr := range rrList {
 		for i := len(rr) - 1; i >= 0; i-- {
 			switch rr[i].Header().Rrtype {
 			case dns.TypeCNAME:
 				temp_cname := rr[i].(*dns.CNAME)
 				add(findSoaNs(temp_cname.Target))
-				//				fmt.Println(  "temp_cname:" , temp_cname )
+				fmt.Println("temp_cname:", temp_cname)
 				return cname, soa, ns
 				break
 			case dns.TypeNS:
 				temp_ns := rr[i].(*dns.NS)
 				ns += temp_ns.Ns + "," // + "|" +  fmt.Sprint( temp_ns.Hdr.Ttl ) + ","
-				//				fmt.Println(  "temp_ns:" , temp_ns )
+				fmt.Println("temp_ns:", temp_ns)
 				break
 			case dns.TypeSOA:
 				temp_soa := rr[i].(*dns.SOA)
 				soa += temp_soa.Ns + "," // + "|" + fmt.Sprint( temp_soa.Hdr.Ttl ) + ","
-				//				fmt.Println( "temp_soa:" , temp_soa )
+				fmt.Println("temp_soa:", temp_soa)
 				break
 			}
 		}

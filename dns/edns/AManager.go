@@ -1,37 +1,37 @@
 package edns
+
 import (
-	"github.com/miekg/dns"
-	"strings"
-	"net"
-	"time"
 	"fmt"
+	"net"
 	"regexp"
+	"strings"
+	"time"
+
+	"github.com/miekg/dns"
 )
 
-func FindA(ednsModel* EDNSModel){
+func FindA(ednsModel *EDNSModel) {
 
 	// 从缓存查询
 
-
 	// 从ns服务器查询
 	a := findA(ednsModel)
-	if strings.EqualFold( a , "")  == false{
+	if strings.EqualFold(a, "") == false {
 		a = strings.TrimRight(a, ",")
-		ednsModel.A = strings.Split( a ,"," )
+		ednsModel.A = strings.Split(a, ",")
 	}
 }
 
-
-func findA(ednsModel* EDNSModel)(string){
+func findA(ednsModel *EDNSModel) string {
 
 	var domain_a string
 
 	var server string
-	if( len( ednsModel.NS ) != 0 ){
+	if len(ednsModel.NS) != 0 {
 		server = ednsModel.NS[0]
-	}else if( len(ednsModel.SOA) != 0 ){
+	} else if len(ednsModel.SOA) != 0 {
 		server = ednsModel.SOA[0]
-	}else{
+	} else {
 		server = OPEN_DNS_SERVER
 	}
 	if dns.IsFqdn(server) {
@@ -58,7 +58,6 @@ func findA(ednsModel* EDNSModel)(string){
 		e.SourceNetmask = 32
 		e.SourceScope = 0
 		e.Address = net.ParseIP(ednsModel.ClientIP).To4()
-
 		opt.Option = append(opt.Option, e)
 		msg.Extra = []dns.RR{opt}
 	}
@@ -69,32 +68,29 @@ func findA(ednsModel* EDNSModel)(string){
 		WriteTimeout: 20 * time.Second,
 	}
 
-	resp, rtt , err := client.Exchange(msg, server)
-//	fmt.Println(resp.Answer)
+	resp, rtt, err := client.Exchange(msg, server)
+	fmt.Println("a question answer:", resp.Answer)
 
 	if err != nil {
-		fmt.Println( rtt , err) // 记录日志  rtt是查询耗时
+		fmt.Println(rtt, err) // 记录日志  rtt是查询耗时
 		return ""
 	}
 
-
-
-	for i := len(resp.Answer)-1 ; i >= 0 ; i--{
+	for i := len(resp.Answer) - 1; i >= 0; i-- {
 		switch resp.Answer[i].Header().Rrtype {
 		case dns.TypeA:
 			temp_a := resp.Answer[i].(*dns.A)
-			domain_a +=  fmt.Sprint(temp_a.A , ":" , temp_a.Hdr.Ttl , ",")
+			domain_a += fmt.Sprint(temp_a.A, ":", temp_a.Hdr.Ttl, ",")
 			break
 		case dns.TypeCNAME:
 			temp_cname := resp.Answer[i].(*dns.CNAME)
-			ednsModel.CName = append( ednsModel.CName , temp_cname.Target )
-			break;
+			ednsModel.CName = append(ednsModel.CName, temp_cname.Target)
+			break
 		}
 	}
 
 	return domain_a
 }
-
 
 func IsIP(ip string) (b bool) {
 	if m, _ := regexp.MatchString("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$", ip); !m {
