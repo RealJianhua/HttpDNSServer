@@ -20,7 +20,7 @@ type EDNSController struct {
 
 func (this *EDNSController) Get() {
 	edns.Init()
-	clientIP := this.Ctx.Input.IP
+	clientIP := this.Ctx.Request.RemoteAddr
 	fmt.Println("clientip:", clientIP)
 	ednsModel := edns.Find(this.GetString("domain"), this.GetString("ip"))
 	fmt.Println(ednsModel)
