@@ -7,7 +7,7 @@ import (
 )
 
 var DEFAULT_RESOLV_FILE = "/etc/resolv.conf"
-var OPEN_DNS_SERVER = "114.114.114.114"
+var OPEN_DNS_SERVER = "8.8.8.8:53"
 var cf *dns.ClientConfig
 
 func Init() {
@@ -18,13 +18,17 @@ func Init() {
 	}
 }
 
-func Find(domain string, ip string) (model EDNSModel, err error) {
+func Find(domain string, ip string, ns string) (model EDNSModel, err error) {
 
 	// 判断域名是否是标准domain
 	domain = dns.Fqdn(domain)
 
 	// 存储对象
 	ednsModel := EDNSModel{domain, ip, nil, nil, nil, nil}
+
+	if len(ns) > 0 {
+		ednsModel.NS = []string{ns}[:]
+	}
 
 	fmt.Println("server dns servers:", cf.Servers)
 
@@ -33,6 +37,8 @@ func Find(domain string, ip string) (model EDNSModel, err error) {
 	if err != nil {
 		return ednsModel, err
 	}
+
+	fmt.Println("ednsModel:", ednsModel)
 
 	// 查询A记录
 	err = FindA(&ednsModel)

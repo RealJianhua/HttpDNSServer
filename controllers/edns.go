@@ -25,7 +25,7 @@ func (this *EDNSController) Get() {
 	result := Result{nil, 0, ""}
 
 	edns.Init()
-	ednsModel, err := edns.Find(this.GetString("domain"), clientIP)
+	ednsModel, err := edns.Find(this.GetString("domain"), clientIP, this.GetString("dns"))
 	if err != nil {
 		result.Error = 500
 		result.ErrMsg = err.Error()
