@@ -18,12 +18,12 @@ type EDNSController struct {
 //	DNS       EDNSModel `json:"dns"`
 //}
 
-func (c *EDNSController) Get() {
+func (this *EDNSController) Get() {
 	edns.Init()
-	clientIP := c.Ctx.Input.get("ip")
+	clientIP := this.Ctx.Input.IP
 	fmt.Println("clientip:", clientIP)
-	ednsModel := edns.Find(c.GetString("domain"), c.GetString("ip"))
+	ednsModel := edns.Find(this.GetString("domain"), this.GetString("ip"))
 	fmt.Println(ednsModel)
-	c.Data["json"] = &ednsModel
-	c.ServeJSON()
+	this.Data["json"] = &ednsModel
+	this.ServeJSON()
 }
