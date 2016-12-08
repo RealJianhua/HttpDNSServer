@@ -34,13 +34,13 @@ func Find(domain, ip, userIp string) ( data dataModel, err error ){
 	// iplookup 模块查询ip对应的region id
 	regID , ipErr := iplookup.FindID(domain ,ip )
 	if ipErr != nil {
-		return data , fmt.Errorf( "终止执行,错误返回,记录日志" , domain , userIp , err )
+		return data , fmt.Errorf( "1终止执行,错误返回,记录日志" , domain , userIp , ipErr )
 	}
 
 	// cache 查询数据
 	a , t , cacheErr := cache.Find(domain, regID)
 	if cacheErr != nil{
-		return data , fmt.Errorf( "终止执行,错误返回,记录日志" , domain , userIp , err )
+		return data , fmt.Errorf( "2终止执行,错误返回,记录日志" , domain , userIp , cacheErr )
 	}
 
 	// 查询IP相关信息

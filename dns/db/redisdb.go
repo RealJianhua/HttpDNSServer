@@ -52,5 +52,5 @@ func newPool(server, password string) *redis.Pool {
 var (
 	pool *redis.Pool
 	redisServer = "127.0.0.1:6379"
-	redisPassword = "httpdnsserver"
+	redisPassword = "c100935redis"
 )

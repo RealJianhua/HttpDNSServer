@@ -36,6 +36,7 @@ func FindID(domain string, ipStr string) (string, error) {
 	if len(v1) == 0 {
 		// 如果默认IP库没有命中 为该ip创建 region id 记录
 	}
-
-	return v1[0][ 0 : len(v1[0]) - 2 ], nil
+	fmt.Println("arr:",v1)
+	return "",nil
+	//return v1[0][ 0 : len(v1[0]) - 2 ], nil
 }
