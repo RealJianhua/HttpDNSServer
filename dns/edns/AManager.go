@@ -69,12 +69,13 @@ func findA(ednsModel *EDNSModel) string {
 	}
 
 	resp, rtt, err := client.Exchange(msg, server)
-	fmt.Println("a question answer:", resp.Answer)
 
 	if err != nil {
 		fmt.Println(rtt, err) // 记录日志  rtt是查询耗时
 		return ""
 	}
+
+	fmt.Println("a question answer:", resp.Answer)
 
 	for i := len(resp.Answer) - 1; i >= 0; i-- {
 		switch resp.Answer[i].Header().Rrtype {
