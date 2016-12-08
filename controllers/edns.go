@@ -20,6 +20,8 @@ type EDNSController struct {
 
 func (c *EDNSController) Get() {
 	edns.Init()
+	clientIP := c.Input().get(ip)
+	fmt.Println("clientip:", clientIP)
 	ednsModel := edns.Find(c.GetString("domain"), c.GetString("ip"))
 	fmt.Println(ednsModel)
 	c.Data["json"] = &ednsModel
