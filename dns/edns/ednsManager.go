@@ -18,7 +18,7 @@ func Init() {
 	}
 }
 
-func Find(domain string, ip string) EDNSModel {
+func Find(domain string, ip string) (model EDNSModel, err error) {
 
 	// 判断域名是否是标准domain
 	domain = dns.Fqdn(domain)
@@ -29,25 +29,36 @@ func Find(domain string, ip string) EDNSModel {
 	fmt.Println("server dns servers:", cf.Servers)
 
 	// 查询SOA记录
-	FindSoaNs(&ednsModel)
+	err = FindSoaNs(&ednsModel)
+	if err != nil {
+		return ednsModel, err
+	}
 
 	// 查询A记录
-	FindA(&ednsModel)
+	err = FindA(&ednsModel)
+	if err != nil {
+		return ednsModel, err
+	}
 
-	return ednsModel
+	return ednsModel, nil
+}
+
+type DomainA struct {
+	A   string `json:"ip"`
+	Ttl int    `json:"ttl"`
 }
 
 type EDNSModel struct {
-	Domain   string
-	ClientIP string
-	A        []string
-	CName    []string
-	SOA      []string
-	NS       []string
+	Domain   string    `json:"domain"`
+	ClientIP string    `json:"clientip"`
+	A        []DomainA `json:"a"`
+	CName    []string  `json:"cname,omitempty"`
+	SOA      []string  `json:"soa,omitempty"`
+	NS       []string  `json:"ns,omitempty"`
 }
 
 func (e *EDNSModel) String() string {
-	str := "dns find : \n"
+	str := ""
 	str += fmt.Sprint("Domain :", e.Domain, "\n")
 	str += fmt.Sprint("ClientIP :", e.ClientIP, "\n")
 	str += fmt.Sprint("A : ", e.A, "\n")

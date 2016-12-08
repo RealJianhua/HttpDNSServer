@@ -8,14 +8,18 @@ import (
 	"github.com/miekg/dns"
 )
 
-func FindSoaNs(ednsModel *EDNSModel) {
+func FindSoaNs(ednsModel *EDNSModel) error {
 
 	// 先查询该域名是否有指定的NS
 
 	// 查询缓存层SOA解析. 如果多数SOA TTL和域名时间一致的话,就没必要增加SOA的缓存层
 
 	// 从本机上级DNS服务器获取域名的NS
-	cname, soa, ns := findSoaNs(ednsModel.Domain)
+	cname, soa, ns, err := findSoaNsFromNameServer(ednsModel.Domain)
+
+	if err != nil {
+		return fmt.Errorf("查询域名服务商地址超时: ", (cf.Servers[0] + ":53"), err)
+	}
 
 	fmt.Println("cname:", cname, ",soa:", soa, ",ns:", ns)
 
@@ -31,9 +35,10 @@ func FindSoaNs(ednsModel *EDNSModel) {
 		ns = strings.TrimRight(ns, ",")
 		ednsModel.NS = strings.Split(ns, ",")
 	}
+	return nil
 }
 
-func findSoaNs(domain string) (string, string, string) {
+func findSoaNsFromNameServer(domain string) (string, string, string, error) {
 
 	var cname string
 	var soa string
@@ -52,7 +57,12 @@ func findSoaNs(domain string) (string, string, string) {
 	m1.RecursionDesired = true
 	m1.Question = make([]dns.Question, 1)
 	m1.Question[0] = dns.Question{domain, dns.TypeSOA, dns.ClassINET}
-	in, _ := dns.Exchange(m1, (cf.Servers[0] + ":53"))
+	in, err := dns.Exchange(m1, (cf.Servers[0] + ":53"))
+	if err != nil {
+		fmt.Println(err)
+		return "", "", "", err
+	}
+
 	rrList := [...][]dns.RR{in.Answer, in.Ns, in.Extra}
 
 	fmt.Println("rrList: ", rrList)
@@ -62,9 +72,12 @@ func findSoaNs(domain string) (string, string, string) {
 			switch rr[i].Header().Rrtype {
 			case dns.TypeCNAME:
 				temp_cname := rr[i].(*dns.CNAME)
-				add(findSoaNs(temp_cname.Target))
+				c, s, n, err := findSoaNsFromNameServer(temp_cname.Target)
+				if err != nil {
+					add(c, s, n)
+				}
 				fmt.Println("temp_cname:", temp_cname)
-				return cname, soa, ns
+				//				return cname, soa, ns, nil
 				break
 			case dns.TypeNS:
 				temp_ns := rr[i].(*dns.NS)
@@ -80,5 +93,5 @@ func findSoaNs(domain string) (string, string, string) {
 		}
 	}
 
-	return cname, soa, ns
+	return cname, soa, ns, nil
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 
+	"encoding/json"
 	"strings"
 
 	"../dns/edns"
@@ -13,25 +14,28 @@ type EDNSController struct {
 	beego.Controller
 }
 
-//type dataModel struct {
-//	Domain    string    `json:"domain"`
-//	Device_ip string    `json:"device_ip"`
-//	Device_sp string    `json:"device_sp"`
-//	DNS       EDNSModel `json:"dns"`
-//}
+type Result struct {
+	EdnsResult interface{} `json:"data,omitempty"`
+	Error      int         `json:"ec"`
+	ErrMsg     string      `json:"em"`
+}
 
 func (this *EDNSController) Get() {
-	clientIP := this.Ctx.Request.RemoteAddr
-	end := strings.Index(clientIP, ":")
-	if end < 0 {
-		end = len(clientIP)
-	}
-	clientIP = string(clientIP[0:end])
+	clientIP := strings.Split(this.Ctx.Request.RemoteAddr, ":")[0]
 	fmt.Println("clientip:", clientIP)
 
+	result := Result{nil, 0, ""}
+
 	edns.Init()
-	ednsModel := edns.Find(this.GetString("domain"), clientIP)
-	fmt.Println(ednsModel)
-	this.Data["json"] = &ednsModel
+	ednsModel, err := edns.Find(this.GetString("domain"), clientIP)
+	if err != nil {
+		result.Error = 500
+		result.ErrMsg = err.Error()
+	} else {
+		result.EdnsResult = &ednsModel
+		fmt.Println(ednsModel)
+	}
+
+	this.Data["json"] = &result
 	this.ServeJSON()
 }

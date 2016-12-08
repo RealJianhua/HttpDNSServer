@@ -10,21 +10,24 @@ import (
 	"github.com/miekg/dns"
 )
 
-func FindA(ednsModel *EDNSModel) {
+func FindA(ednsModel *EDNSModel) error {
 
 	// 从缓存查询
+	// TODO
 
 	// 从ns服务器查询
-	a := findA(ednsModel)
-	if strings.EqualFold(a, "") == false {
-		a = strings.TrimRight(a, ",")
-		ednsModel.A = strings.Split(a, ",")
+	err := findA(ednsModel)
+	if err != nil {
+		return err
 	}
+
+	// 放进缓存
+	// TODO
+
+	return nil
 }
 
-func findA(ednsModel *EDNSModel) string {
-
-	var domain_a string
+func findA(ednsModel *EDNSModel) error {
 
 	var server string
 	if len(ednsModel.NS) != 0 {
@@ -45,6 +48,8 @@ func findA(ednsModel *EDNSModel) string {
 	msg := new(dns.Msg)
 	msg.SetQuestion(domain, dns.TypeA)
 	msg.RecursionDesired = true
+
+	fmt.Println("a question. domain:", domain, "cname:", ednsModel.CName[len(ednsModel.CName)-1], "server: ", server)
 
 	if ednsModel.ClientIP != "" {
 
@@ -72,16 +77,20 @@ func findA(ednsModel *EDNSModel) string {
 
 	if err != nil {
 		fmt.Println(rtt, err) // 记录日志  rtt是查询耗时
-		return ""
+		return err
 	}
 
 	fmt.Println("a question answer:", resp.Answer)
+
+	ednsModel.A = make([]DomainA, 0)
 
 	for i := len(resp.Answer) - 1; i >= 0; i-- {
 		switch resp.Answer[i].Header().Rrtype {
 		case dns.TypeA:
 			temp_a := resp.Answer[i].(*dns.A)
-			domain_a += fmt.Sprint(temp_a.A, ":", temp_a.Hdr.Ttl, ",")
+			//			fmt.Println("temp_a:", temp_a.A, ", ttl:", temp_a.Hdr.Ttl)
+			a := DomainA{fmt.Sprint(temp_a.A), int(temp_a.Hdr.Ttl)}
+			ednsModel.A = append(ednsModel.A, a)
 			break
 		case dns.TypeCNAME:
 			temp_cname := resp.Answer[i].(*dns.CNAME)
@@ -90,7 +99,7 @@ func findA(ednsModel *EDNSModel) string {
 		}
 	}
 
-	return domain_a
+	return nil
 }
 
 func IsIP(ip string) (b bool) {
